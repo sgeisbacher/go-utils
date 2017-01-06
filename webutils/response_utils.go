@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 )
 
-func RespondWithJSON(w http.ResponseWriter, data interface{}, dataErr error) {
-	if dataErr != nil {
+func RespondWithJSON(w http.ResponseWriter, data interface{}, internalErr bool) {
+	if internalErr {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if data == nil {
+	if isNil(data) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, `{}`)
 		return
@@ -24,4 +25,9 @@ func RespondWithJSON(w http.ResponseWriter, data interface{}, dataErr error) {
 		log.Printf("error while encoding json: %v\n", encoderErr)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func isNil(a interface{}) bool {
+	defer func() { recover() }()
+	return a == nil || reflect.ValueOf(a).IsNil()
 }
